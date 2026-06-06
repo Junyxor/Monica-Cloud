@@ -1,0 +1,65 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Frontend build output
+dist/
+**/dist/
+build/
+**/build/
+.vite/
+**/.vite/
+*.tsbuildinfo
+
+# Generated verification artifacts
+webui/screenshots-*.png
+webui/vite.log
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment and local secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+
+# Local runtime data
+data/
+storage/
+vaults/
+backups/
+tmp/
+temp/
+*.mdbx
+*.sqlite
+*.sqlite3
+*.db
+
+# Rust server output
+target/
+**/target/
+*.rs.bk
+
+# Go server output
+bin/
+coverage.out
+*.test
+
+# Coverage and test reports
+coverage/
+playwright-report/
+test-results/
+
+# Editor and OS files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+desktop.ini
