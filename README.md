@@ -1,4 +1,4 @@
-# Monica Server
+# Monica Cloud
 
 Self-hosted server and WebUI for Monica Pass.
 
