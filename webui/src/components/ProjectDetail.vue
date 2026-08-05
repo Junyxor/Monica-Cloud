@@ -32,7 +32,7 @@ function modeLabel(mode: VaultProject["tigaMode"]) {
   <m3e-card variant="filled" class="detail-card">
     <div slot="content" class="stack">
       <div class="row-title">
-        <m3e-icon :name="projectIcon(project.kind)"></m3e-icon>
+        <span class="icon-tile"><m3e-icon :name="projectIcon(project.kind)"></m3e-icon></span>
         <div>
           <h2>{{ project.title }}</h2>
           <small>{{ project.subtitle }}</small>
@@ -55,7 +55,7 @@ function modeLabel(mode: VaultProject["tigaMode"]) {
       <div>
         <h3>{{ t("detail.entries") }}</h3>
         <div v-for="entry in entries" :key="entry.id" class="mini-row">
-          <m3e-icon :name="entryIcon(entry.type)"></m3e-icon>
+          <span class="mini-icon-tile"><m3e-icon :name="entryIcon(entry.type)"></m3e-icon></span>
           <span>{{ entry.label }}</span>
           <small>{{ entry.valuePreview }}</small>
         </div>
@@ -63,7 +63,7 @@ function modeLabel(mode: VaultProject["tigaMode"]) {
       <div>
         <h3>{{ t("detail.attachments") }}</h3>
         <div v-for="file in attachments.slice(0, 4)" :key="file.id" class="mini-row">
-          <m3e-icon :name="file.isImage ? 'image' : 'attach_file'"></m3e-icon>
+          <span class="mini-icon-tile"><m3e-icon :name="file.isImage ? 'image' : 'attach_file'"></m3e-icon></span>
           <span>{{ file.fileName }}</span>
           <small>{{ formatBytes(file.sizeBytes) }}</small>
         </div>

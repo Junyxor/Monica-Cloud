@@ -213,7 +213,7 @@ function projectTitle(projectId: string) {
               <m3e-card v-for="source in snapshot.syncSources" :key="source.id" variant="filled" class="motion-card">
                 <div slot="content" class="source-card">
                   <div class="row-title">
-                    <m3e-icon name="cloud_sync"></m3e-icon>
+                    <span class="icon-tile"><m3e-icon name="cloud_sync"></m3e-icon></span>
                     <div>
                       <strong>{{ source.name }}</strong>
                       <small>{{ source.type }}</small>

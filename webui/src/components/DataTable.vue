@@ -27,7 +27,7 @@ const hasStatus = computed(() => props.rows.some((row) => row.state));
         <tr v-for="row in rows" :key="row.id">
           <td class="item-cell" :data-label="t('columns.item')">
             <div class="row-title">
-              <m3e-icon :name="row.icon"></m3e-icon>
+              <span class="icon-tile"><m3e-icon :name="row.icon"></m3e-icon></span>
               <div>
                 <strong>{{ row.title }}</strong>
                 <small v-if="row.subtitle">{{ row.subtitle }}</small>

@@ -215,19 +215,19 @@ m3e-button {
 }
 
 .sidebar-brand {
-  grid-template-columns: 72px minmax(0, 1fr);
+  grid-template-columns: 32px minmax(0, 1fr);
   min-height: 88px;
   gap: 14px;
   margin: 0 2px 12px;
-  padding: 4px 10px 12px 2px;
+  padding: 4px 10px 12px 10px;
   border-radius: 0;
   background: transparent;
   border-bottom: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant, #cac4d0) 44%, transparent);
 }
 
 .sidebar-brand img {
-  width: 72px;
-  height: 72px;
+  width: auto;
+  height: 32px;
   filter: drop-shadow(0 2px 5px color-mix(in srgb, var(--md-sys-color-shadow, #000) 18%, transparent));
 }
 
@@ -575,7 +575,7 @@ tbody tr:hover td {
   align-items: center;
 }
 
-.row-title > m3e-icon {
+.icon-tile {
   width: 44px;
   height: 44px;
   border-radius: 16px;
@@ -684,7 +684,7 @@ tbody tr:hover td {
   background: color-mix(in srgb, var(--md-sys-color-secondary-container, var(--app-selected)) 34%, transparent);
 }
 
-.mini-row m3e-icon {
+.mini-icon-tile {
   width: 32px;
   height: 32px;
   border-radius: 12px;
@@ -692,6 +692,11 @@ tbody tr:hover td {
   place-items: center;
   color: var(--md-sys-color-primary, var(--app-primary));
   background: var(--md-sys-color-surface-container-highest, var(--app-surface-high));
+}
+
+.icon-tile m3e-icon,
+.mini-icon-tile m3e-icon {
+  display: block;
 }
 
 .mini-row small {
