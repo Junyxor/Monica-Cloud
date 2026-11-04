@@ -1,0 +1,49 @@
+[package]
+name = "monica-cloud"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.88"
+license = "AGPL-3.0-only"
+description = "Self-hosted zero-knowledge sync and backup server for Monica Pass"
+publish = false
+
+[features]
+default = ["sqlite"]
+# Statically link SQLite, the same choice vaultwarden makes for its `sqlite` feature.
+sqlite = ["diesel/sqlite", "diesel_migrations/sqlite", "dep:libsqlite3-sys"]
+
+[dependencies]
+axum = { version = "0.8", features = ["macros"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "fs", "io-util", "signal", "time", "sync"] }
+tokio-util = { version = "0.7", features = ["io"] }
+tower = "0.5"
+tower-http = { version = "0.6", features = ["fs", "trace", "set-header"] }
+futures-util = "0.3"
+bytes = "1"
+
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+diesel = { version = "2.3", features = ["chrono", "r2d2"] }
+diesel_migrations = "2.3"
+libsqlite3-sys = { version = "0.35", features = ["bundled"], optional = true }
+
+chrono = { version = "0.4", default-features = false, features = ["clock", "serde"] }
+uuid = { version = "1", features = ["v4"] }
+argon2 = "0.5"
+sha2 = "0.10"
+rand = "0.8"
+data-encoding = "2"
+subtle = "2"
+jsonwebtoken = "9"
+
+dotenvy = "0.15"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+thiserror = "2"
+dashmap = "6"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = "debuginfo"
