@@ -1,51 +1,40 @@
-# Monica Server WebUI
+# Monica Cloud WebUI
 
-Original WebUI prototype for Monica's self-hosted backup service. It is a Vue 3 + Vite app using `@m3e/web` Material 3 Expressive Web Components.
-
-Vue uses the `m3e-*` components directly as custom elements, so there is no wrapper layer, router, or state library in this prototype.
+Vue 3 + Vite web vault built with [`@m3e/web`](https://github.com/matraic/m3e) Material 3
+Expressive components. It decrypts the vault in the browser with WebCrypto; the server only sees
+ciphertext.
 
 ## Structure
 
-- `src/lib/modules.ts` registers feature modules. Add, remove, or disable a WebUI section there.
-- `src/i18n/en.ts` and `src/i18n/zh-CN.ts` keep translations as independent files.
-- `src/lib/theme.ts` owns light, dark, auto, and palette presets.
-- `src/components/` contains only reusable UI pieces with clear payoff: table, project detail, and appearance settings.
+```text
+src/
+├── lib/
+│   ├── crypto.ts     protocol §1: PBKDF2/HKDF, EncString, chunked file encryption, Send keys
+│   ├── client.ts     typed API client (also used by scripts/e2e.ts in Node)
+│   ├── session.ts    login / unlock / lock / auto-lock; tokens in sessionStorage, keys in memory only
+│   ├── vault.ts      decrypted reactive vault, incremental sync, item/folder/attachment/Send actions
+│   ├── items.ts      item types, payload schema, field descriptors, password generator
+│   ├── totp.ts       RFC 6238 codes
+│   ├── router.ts     hash routes (#/vault/…, #/send, #/send/{accessId}/{key}, #/admin/…)
+│   ├── ui.ts         toasts, confirm dialog, clipboard with auto-clear
+│   └── theme.ts      palettes and light/dark
+├── views/            Auth, Unlock, AppShell, Vault, Send, Receive, Devices, Activity, Settings, Admin*
+├── components/       ItemDetail, ItemEditor, ItemIcon, TotpCode, PasswordInput, dialogs
+└── i18n/             en.ts, zh-CN.ts (zh-CN is type-checked against en)
+```
 
-## Run
+The detail view and the editor are both generated from `typeFields` in `lib/items.ts`, so a new
+field only needs a descriptor there plus its two translations.
+
+## Develop
 
 ```bash
 npm install
-npm run dev
+npm run dev          # http://127.0.0.1:5173, proxies /api to MONICA_API (default http://127.0.0.1:8000)
+npm run typecheck
+npm run build        # dist/, served by the server via WEB_VAULT_FOLDER
+npm run e2e          # protocol test against MONICA_URL (default http://127.0.0.1:8000)
 ```
 
-The dev server listens on:
-
-```text
-http://127.0.0.1:5173/
-```
-
-## Build
-
-```bash
-npm run build
-```
-
-The production bundle is emitted to `dist/`.
-
-## Backend Status
-
-The current UI uses mock data from `src/lib/api.ts`. Replace `loadServerSnapshot()` with real API calls when the backend is ready.
-
-Reserved API names:
-
-```text
-POST /api/v1/auth/register
-POST /api/v1/auth/login
-POST /api/v1/devices
-GET  /api/v1/vaults
-POST /api/v1/vaults/{vaultId}/backups
-GET  /api/v1/vaults/{vaultId}/backups/{backupId}/download
-POST /api/v1/vaults/{vaultId}/sync/bundles
-```
-
-The server should store encrypted Monica JSON, MDBX files, and future sync bundles without decrypting vault contents. The WebUI manages accounts, devices, backups, audit events, retention policy, and endpoint settings.
+Fonts (Roboto, Material Symbols) are bundled locally; the app makes no third-party requests,
+which keeps the strict Content-Security-Policy sent by the server intact.

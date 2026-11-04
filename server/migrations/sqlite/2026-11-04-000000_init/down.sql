@@ -1,0 +1,9 @@
+DROP TABLE server_settings;
+DROP TABLE events;
+DROP TABLE tombstones;
+DROP TABLE sends;
+DROP TABLE attachments;
+DROP TABLE items;
+DROP TABLE folders;
+DROP TABLE devices;
+DROP TABLE users;
