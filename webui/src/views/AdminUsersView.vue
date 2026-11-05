@@ -32,6 +32,8 @@ async function patch(user: AdminUser, change: Parameters<typeof client.adminUpda
     users.value = users.value.map((u) => (u.id === user.id ? updated : u));
   } catch (e) {
     toastError(e);
+    // Re-render the row so a rejected role choice snaps back to the stored role.
+    users.value = users.value.map((u) => (u.id === user.id ? { ...u } : u));
   }
 }
 

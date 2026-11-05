@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, reactive, ref } from "vue";
+import { computed, onBeforeUnmount, reactive, ref } from "vue";
 import { t } from "../i18n";
 import { type FieldDescriptor, creatableTypes, emptyPayload, generatePassword, getPath, setPath, typeFields, typeInfo, typesWithUris, type ItemPayload } from "../lib/items";
 import { confirm, toast, toastError } from "../lib/ui";
@@ -10,16 +10,31 @@ import PasswordInput from "./PasswordInput.vue";
 const props = defineProps<{ item: VaultItem | null; initialType: number; initialFolder: string | null; initialFavorite: boolean }>();
 const emit = defineEmits<{ saved: [item: VaultItem]; cancel: [] }>();
 
-const isNew = !props.item;
-const type = ref(props.item?.type ?? props.initialType);
-const folderId = ref(props.item?.folderId ?? props.initialFolder ?? "");
-const favorite = ref(props.item?.favorite ?? props.initialFavorite);
+// The item as it was when editing started. Its revision is what the server must still have,
+// so a change synced from another device meanwhile is reported as a conflict instead of
+// being overwritten silently.
+const base = props.item ?? undefined;
+const isNew = !base;
+const type = ref(base?.type ?? props.initialType);
+const folderId = ref(base?.folderId ?? props.initialFolder ?? "");
+const favorite = ref(base?.favorite ?? props.initialFavorite);
 // Deep copy so cancelling leaves the original untouched; unknown keys are kept.
-const payload = reactive<ItemPayload>(props.item ? JSON.parse(JSON.stringify(props.item.payload)) : emptyPayload());
+const payload = reactive<ItemPayload>(base ? JSON.parse(JSON.stringify(base.payload)) : emptyPayload());
 payload.uris ??= [];
 payload.fields ??= [];
 const saving = ref(false);
 const error = ref("");
+
+const snapshot = () => JSON.stringify([type.value, folderId.value, favorite.value, payload]);
+const pristine = snapshot();
+const dirty = computed(() => snapshot() !== pristine);
+defineExpose({ dirty });
+
+function warnBeforeUnload(event: BeforeUnloadEvent) {
+  if (dirty.value && !saving.value) event.preventDefault();
+}
+window.addEventListener("beforeunload", warnBeforeUnload);
+onBeforeUnmount(() => window.removeEventListener("beforeunload", warnBeforeUnload));
 
 const info = computed(() => typeInfo(type.value));
 const fields = computed(() => typeFields[info.value.key]);
@@ -53,9 +68,11 @@ async function save(force = false) {
   payload.fields = (payload.fields ?? []).filter((f) => f.name.trim() || f.value);
   saving.value = true;
   try {
+    // Overwriting after a conflict builds on the server's copy (its item key keeps attachments readable).
+    const target = force ? (props.item ?? base) : base;
     const saved = await saveItem(
-      { id: props.item?.id, type: type.value, folderId: folderId.value || null, favorite: favorite.value, archived: props.item?.archived ?? false, payload },
-      props.item ?? undefined,
+      { id: base?.id, type: type.value, folderId: folderId.value || null, favorite: favorite.value, archived: target?.archived ?? false, payload },
+      target,
       force
     );
     toast(isNew ? t("editor.created") : t("editor.saved"));

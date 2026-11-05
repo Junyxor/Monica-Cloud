@@ -67,7 +67,8 @@ export interface ItemPayload {
   login?: { username?: string; password?: string; totp?: string; loginType?: string; ssoProvider?: string };
   card?: { holder?: string; number?: string; expiry?: string; cvv?: string; brand?: string };
   document?: { kind?: string; number?: string; holder?: string; issuedBy?: string; expiry?: string };
-  totp?: { secret?: string; issuer?: string; account?: string; digits?: number; period?: number; algorithm?: string };
+  /** `otpType` (TOTP, STEAM, HOTP, YANDEX, MOTP) is written by Monica for Android. */
+  totp?: { secret?: string; issuer?: string; account?: string; digits?: number; period?: number; algorithm?: string; otpType?: string };
   /** Same shape as Bitwarden `fido2Credentials`; `keyValue` is the PKCS#8 private key (protocol §2.1). */
   passkey?: {
     credentialId?: string;

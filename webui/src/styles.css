@@ -120,6 +120,17 @@ m3e-icon.star,
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 /* ------------------------------------------------------------------ splash */
 
 .splash {
@@ -886,7 +897,8 @@ m3e-button.danger {
   display: flex;
   align-items: center;
   gap: 14px;
-  min-height: 64px;
+  /* Fixed: VaultView renders only the visible rows and positions them by this height. */
+  height: 64px;
   padding: 10px 12px;
   border-radius: var(--radius-m);
   cursor: pointer;
