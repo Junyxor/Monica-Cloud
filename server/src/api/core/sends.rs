@@ -124,10 +124,7 @@ async fn validate(data: SendData, creating: bool) -> ApiResult<ValidatedSend> {
     };
 
     let password_hash = match &data.password_hash {
-        Some(hash) if crypto::is_valid_auth_hash(hash) => {
-            let hash = hash.clone();
-            Some(tokio::task::spawn_blocking(move || crypto::hash_password(&hash)).await?)
-        }
+        Some(hash) if crypto::is_valid_auth_hash(hash) => Some(crypto::hash_secret(hash.clone()).await?),
         Some(_) => err!(BadRequest, "passwordHash must be base64 of 32 bytes"),
         None => None,
     };
@@ -300,7 +297,7 @@ async fn access_send(
     Path(access_id): Path<String>,
     body: bytes::Bytes,
 ) -> JsonResult {
-    state.login_limiter.check(&format!("send:{ip}"))?;
+    state.login_limiter.check_ip("send", &ip)?;
     // The body is optional: recipients without a password may POST nothing.
     let data: AccessData = if body.iter().all(u8::is_ascii_whitespace) {
         AccessData::default()
@@ -324,8 +321,7 @@ async fn access_send(
         let Some(presented) = data.password_hash else {
             err!(Unauthorized, "password required");
         };
-        let ok = tokio::task::spawn_blocking(move || crypto::verify_password(&presented, &phc)).await?;
-        if !ok {
+        if !crypto::verify_secret(presented, phc).await? {
             err!(Unauthorized, "invalid password");
         }
     }

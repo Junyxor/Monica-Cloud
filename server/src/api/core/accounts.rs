@@ -60,11 +60,9 @@ struct PasswordData {
     kdf_iterations: Option<i32>,
 }
 
-/// Verify the caller's current authHash off the async runtime.
+/// Verify the caller's current authHash.
 async fn verify_current(user: &User, auth_hash: String) -> ApiResult<()> {
-    let phc = user.password_hash.clone();
-    let ok = tokio::task::spawn_blocking(move || crypto::verify_password(&auth_hash, &phc)).await?;
-    if !ok {
+    if !crypto::verify_secret(auth_hash, user.password_hash.clone()).await? {
         err!(BadRequest, "master password is incorrect");
     }
     Ok(())
@@ -85,7 +83,7 @@ async fn change_password(
     }
     verify_current(&auth.user, data.auth_hash).await?;
 
-    let new_hash = tokio::task::spawn_blocking(move || crypto::hash_password(&data.new_auth_hash)).await?;
+    let new_hash = crypto::hash_secret(data.new_auth_hash).await?;
     let Auth {
         user: verified,
         ip,

@@ -3,7 +3,6 @@ use diesel::prelude::*;
 use serde_json::{Value, json};
 
 use crate::{
-    crypto,
     db::{
         Conn,
         schema::{attachments, sends, users},
@@ -38,7 +37,15 @@ pub struct User {
 }
 
 impl User {
-    pub fn new(email: String, name: String, auth_hash: &str, kdf_type: i32, kdf_iterations: i32, akey: String) -> Self {
+    /// `password_hash` is the Argon2id PHC string of the client's authHash ([`crate::crypto::hash_secret`]).
+    pub fn new(
+        email: String,
+        name: String,
+        password_hash: String,
+        kdf_type: i32,
+        kdf_iterations: i32,
+        akey: String,
+    ) -> Self {
         let now = now();
         Self {
             uuid: new_uuid(),
@@ -46,7 +53,7 @@ impl User {
             name,
             role: ROLE_USER.into(),
             enabled: true,
-            password_hash: crypto::hash_password(auth_hash),
+            password_hash,
             kdf_type,
             kdf_iterations,
             akey,
@@ -61,14 +68,6 @@ impl User {
 
     pub fn is_admin(&self) -> bool {
         self.role == ROLE_OWNER || self.role == ROLE_ADMIN
-    }
-
-    pub fn check_auth_hash(&self, auth_hash: &str) -> bool {
-        crypto::verify_password(auth_hash, &self.password_hash)
-    }
-
-    pub fn set_auth_hash(&mut self, auth_hash: &str) {
-        self.password_hash = crypto::hash_password(auth_hash);
     }
 
     /// Invalidates every access token issued so far.
