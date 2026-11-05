@@ -44,7 +44,8 @@ runs on secure origins, so the WebUI works on `localhost` or `https://` only.
 | Devices, audit log, admin console (users, roles, quotas, policies, diagnostics) | done |
 | WebUI: three-pane vault, live TOTP, editor, Send, settings, admin, zh-CN/en, light/dark, phone layout | done |
 | Monica for Android (CE): custom-server login, two-way sync of the Monica-local vault, background sync | done on CE branch `feat/monica-cloud` — see `docs/ce-integration.zh-CN.md` |
-| Attachments/images and Send in the Android app | next |
+| Attachments in the Android app (both directions) | done |
+| Send in the Android app | next |
 | Two-factor login, organizations/sharing, push notifications, Argon2id KDF | planned (protocol §6) |
 
 ## Tests

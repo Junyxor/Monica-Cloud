@@ -17,7 +17,10 @@ KeePass、Bitwarden、MDBX 的条目继续走各自的同步，不会上传，�
 | 6 passkey | `PasskeyEntry`，私钥经 `PasskeyPrivateKeyStore` 取出 PKCS#8 写入 `keyValue` |
 | 文件夹 | 本地 `Category`（不属于 Bitwarden / MDBX 的分类） |
 
-暂不同步：附件与图片（`imagePaths`、`attachments`）、Send、密码历史表、`SecureItem` 中遗留的 PASSWORD 类型。
+附件：密码和安全条目的附件（`attachments` 表）双向同步。从云端下载的附件解密后按编辑器的方式存为本地附件
+（独立 CEK 加密、`source = LOCAL`），所以预览、分享、备份都照常可用；条目进回收站时附件只是软删除，不会删除云端附件。
+
+暂不同步：安全条目的旧式图片字段（`imagePaths`）、Send、密码历史表、`SecureItem` 中遗留的 PASSWORD 类型。
 
 ## 2. 模块结构
 
@@ -72,6 +75,10 @@ payload 分两层：
    - 全量同步时云端突然为空而本地已同步 ≥ 5 条：中止，界面让用户确认。
 4. 推送：新条目用 `POST /items/import` 批量上传（每批 500）；修改用 `PUT` 带 `lastKnownRevisionDate`，
    409/404 留到下次同步处理；回收站状态单独调用 trash / restore；本地删除调用 `DELETE`。
+5. 附件：对本次拉取到的条目，下载本地没有的云端附件、删除云端已删的附件；本地新增的附件加密上传，
+   本地删除（条目仍在）的附件在云端删除。上传会提升条目的服务器 revision，链接同步更新，避免被误判为远端修改。
+   附件链接复用 `monica_cloud_links`：`object_type = attachment`，`revision` 存父条目云端 id，`content_hash` 存所属本地条目。
+   旧版本已同步过的账户升级后会做一次全量同步，补齐未变化条目的附件。
 
 触发：App 启动、本地条目/分类表变化（Room InvalidationTracker，5 秒防抖，忽略同步自身的写入）、
 WorkManager 每 15 分钟，以及设置页“立即同步”。
@@ -103,10 +110,11 @@ MONICA_CLOUD_URL=http://127.0.0.1:8000 ./gradlew :app:testDebugUnitTest --tests 
 | 退出登录再登录 | 不产生重复条目 |
 | 本机通行密钥上传 / 服务器通行密钥下载 | `keyValue` 与本地 PKCS#8 一致；下载的私钥进入 `PasskeyPrivateKeyStore` 受保护存储 |
 | 无变化时再次同步 | 服务器上所有条目 revision 不变（映射幂等） |
+| 旧版本同步后升级到支持附件的版本 | 启动同步自动下载附件，预览内容与网站写入一致 |
+| App 编辑页添加附件 / 移除附件 | 服务器端出现 / 删除对应附件，WebUI 客户端解密内容一致 |
 
 ## 8. 后续
 
-- 附件与图片同步（协议 §4.5 已就绪）
 - Send 列表与创建
 - 字段级三方合并（替代冲突副本）
 - 设置页显示冲突副本列表
