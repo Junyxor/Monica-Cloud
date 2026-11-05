@@ -99,9 +99,29 @@ impl User {
         Ok(())
     }
 
+    /// Writes every column. Only call this on a row read inside the same write
+    /// transaction; a copy loaded earlier (e.g. by the `Auth` guard) would roll back
+    /// concurrent changes such as a newer `revision_date` or an admin disabling the account.
     pub fn save(&mut self, conn: &mut Conn) -> ApiResult<()> {
         self.updated_at = now();
         diesel::update(users::table.find(&self.uuid)).set(&*self).execute(conn)?;
+        Ok(())
+    }
+
+    /// Records a successful login without touching any other column.
+    pub fn touch_login(conn: &mut Conn, uuid: &str) -> ApiResult<NaiveDateTime> {
+        let now = now();
+        diesel::update(users::table.find(uuid))
+            .set((users::last_login_at.eq(Some(now)), users::updated_at.eq(now)))
+            .execute(conn)?;
+        Ok(now)
+    }
+
+    /// Changes the display name without touching any other column.
+    pub fn set_name(conn: &mut Conn, uuid: &str, name: &str) -> ApiResult<()> {
+        diesel::update(users::table.find(uuid))
+            .set((users::name.eq(name), users::updated_at.eq(now())))
+            .execute(conn)?;
         Ok(())
     }
 

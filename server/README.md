@@ -18,7 +18,7 @@ src/
 ├── crypto.rs          Argon2id, random tokens, digests (no vault crypto)
 ├── storage.rs         blob store for attachments and Send files (tmp → fsync → rename)
 ├── ratelimit.rs       per-IP login limiter
-├── jobs.rs            hourly purge of expired Sends, old events, tombstones, stale uploads
+├── jobs.rs            hourly purge of expired Sends, old events, tombstones, stale uploads, idle devices
 ├── db/
 │   ├── schema.rs      diesel tables (mirror migrations/sqlite)
 │   └── models/        user, device, folder, item, attachment, send, tombstone, event, setting
@@ -26,7 +26,7 @@ src/
     ├── identity.rs    config, prelogin, register, token (password/refresh), logout
     ├── core/          accounts, sync, items, folders, attachments, sends, devices, events
     ├── admin.rs       users, settings, diagnostics, audit log (owner/admin role)
-    └── web.rs         WebUI static files with SPA fallback, CSP, /alive
+    └── web.rs         WebUI static files (precompressed .br/.gz, SPA fallback except /assets), CSP, /alive
 ```
 
 Framework note: vaultwarden uses Rocket; this server uses axum (tokio-native, plain streaming request

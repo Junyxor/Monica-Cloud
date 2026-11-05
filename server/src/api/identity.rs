@@ -230,6 +230,15 @@ async fn password_grant(state: AppState, ip: String, data: TokenData) -> JsonRes
     let (user, device, refresh_token) = state
         .db
         .write(move |conn| {
+            // Re-read inside the transaction: the password may have been changed or the
+            // account disabled while argon2 was running, and the stale copy must not be
+            // written back.
+            let Some(mut user) = User::find(conn, &user.uuid)?.filter(|u| u.password_hash == user.password_hash) else {
+                err!(Unauthorized, "invalid email or master password");
+            };
+            if !user.enabled {
+                err!(Forbidden, "account is disabled");
+            }
             let mut device = match Device::find_by_identifier(conn, &user.uuid, &identifier)? {
                 Some(existing) => existing,
                 None => Device::new(user.uuid.clone(), identifier),
@@ -246,9 +255,7 @@ async fn password_grant(state: AppState, ip: String, data: TokenData) -> JsonRes
             let refresh_token = device.rotate_refresh_token();
             device.upsert(conn)?;
 
-            let mut user = user;
-            user.last_login_at = Some(now());
-            user.save(conn)?;
+            user.last_login_at = Some(User::touch_login(conn, &user.uuid)?);
             Event::new(Some(&user.uuid), &user.email, "auth.login", &device.uuid, &ip)
                 .device(&device.name)
                 .insert(conn)?;

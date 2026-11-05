@@ -238,7 +238,7 @@ async fn upload_send_file(State(state): State<AppState>, auth: Auth, Path(id): P
     }
     state.storage.store(&blob_id, body, size).await?;
 
-    let send = state
+    let result = state
         .db
         .write(move |conn| {
             let mut send = find_send(conn, &id, &auth.user.uuid)?;
@@ -247,8 +247,12 @@ async fn upload_send_file(State(state): State<AppState>, auth: Auth, Path(id): P
             send.save(conn)?;
             Ok(send)
         })
-        .await?;
-    Ok(Json(send.to_json()))
+        .await;
+    // Deleted (or purged) while uploading: the blob is unreferenced now.
+    if let Err(Error::NotFound(_)) = &result {
+        state.storage.delete(&blob_id).await;
+    }
+    Ok(Json(result?.to_json()))
 }
 
 async fn delete_send(State(state): State<AppState>, auth: Auth, Path(id): Path<String>) -> JsonResult {
@@ -371,12 +375,14 @@ async fn download_send_file(
         .into_response())
 }
 
-/// Background job: drop Sends past their deletion date.
+/// Background job: drop Sends past their deletion date and file Sends that were
+/// never uploaded within a day.
 pub async fn purge_expired_sends(state: &AppState) -> ApiResult<usize> {
+    let pending_before = now() - Duration::hours(24);
     let blobs = state
         .db
-        .write(|conn| {
-            let expired = Send::find_expired(conn)?;
+        .write(move |conn| {
+            let expired = Send::find_expired(conn, pending_before)?;
             let mut blobs = Vec::new();
             for send in &expired {
                 let revision = User::next_revision(conn, &send.user_uuid)?;
