@@ -7,7 +7,7 @@ import { markRaw, reactive, toRaw } from "vue";
 import { ApiError, type AttachmentRecord, type FolderRecord, type ItemRecord, type SendRecord, type SendWrite, sendShareUrl } from "./client";
 import * as mc from "./crypto";
 import { nameCollator } from "./format";
-import { emptyPayload, itemSubtitle, searchText, type ItemPayload } from "./items";
+import { emptyPayload, searchText, type ItemPayload } from "./items";
 import { client, onLock, userKey } from "./session";
 
 /**
@@ -28,8 +28,6 @@ export interface VaultItem {
   readonly itemKeyRaw: Uint8Array<ArrayBuffer> | null;
   /** Lower-cased text the list search matches. */
   readonly search: string;
-  /** Second line in the item list. */
-  readonly subtitle: string;
   /** Set when the item could not be decrypted (e.g. written by a newer client). */
   readonly error?: string;
 }
@@ -113,15 +111,9 @@ async function decryptItem(record: ItemRecord): Promise<VaultItem> {
   try {
     const decrypted = await mc.decryptItem<ItemPayload>(key(), record);
     const payload = { ...emptyPayload(), ...decrypted.payload };
-    return markRaw({
-      ...base,
-      payload,
-      itemKeyRaw: decrypted.itemKeyRaw,
-      search: searchText(payload),
-      subtitle: itemSubtitle(record.type, payload)
-    });
+    return markRaw({ ...base, payload, itemKeyRaw: decrypted.itemKeyRaw, search: searchText(payload) });
   } catch (error) {
-    return markRaw({ ...base, payload: { ...emptyPayload(), name: "—" }, itemKeyRaw: null, search: "", subtitle: "", error: String(error) });
+    return markRaw({ ...base, payload: { ...emptyPayload(), name: "—" }, itemKeyRaw: null, search: "", error: String(error) });
   }
 }
 

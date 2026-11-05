@@ -4,7 +4,7 @@ import { t } from "../i18n";
 import type { AttachmentRecord } from "../lib/client";
 import { encryptedBlobSize } from "../lib/crypto";
 import { formatBytes, formatDateTime } from "../lib/format";
-import { type FieldDescriptor, getPath, hostOf, typeFields, typeInfo } from "../lib/items";
+import { type FieldDescriptor, getPath, hostOf, isFieldVisible, optionLabel, typeFields, typeInfo } from "../lib/items";
 import { serverConfig } from "../lib/session";
 import { confirm, copy, toast, toastError } from "../lib/ui";
 import {
@@ -36,9 +36,12 @@ const names = reactive(new Map<string, string>());
 
 const fields = computed(() =>
   typeFields[info.value.key]
+    .filter((field) => isFieldVisible(field, props.item.payload))
     .map((field) => ({ field, value: getPath(props.item.payload, field.path) }))
-    .filter(({ value }) => value !== undefined && value !== null && value !== "" && value !== false)
+    .filter(({ field, value }) => value !== undefined && value !== null && value !== "" && value !== false && value !== field.defaultValue)
 );
+const history = computed(() => (props.item.payload.passwordHistory ?? []).filter((entry) => entry?.password));
+const showHistory = ref(false);
 const folderId = computed({
   get: () => props.item.folderId ?? "",
   set: (value: string) => move(value || null)
@@ -58,6 +61,7 @@ watch(
 
 function display(field: FieldDescriptor, value: unknown): string {
   if (field.kind === "boolean") return value ? t("common.yes") : t("common.no");
+  if (field.kind === "select") return optionLabel(field, String(value));
   return String(value);
 }
 
@@ -259,10 +263,28 @@ function openUri(uri: string) {
         </div>
       </section>
 
+      <section v-if="history.length" class="field-group">
+        <button type="button" class="group-toggle" :aria-expanded="showHistory" @click="showHistory = !showHistory">
+          <span class="group-title">{{ t("item.passwordHistory", { count: history.length }) }}</span>
+          <m3e-icon :name="showHistory ? 'expand_less' : 'expand_more'"></m3e-icon>
+        </button>
+        <template v-if="showHistory">
+          <div v-for="(entry, index) in history" :key="index" class="field-row">
+            <span class="field-label">{{ t("item.usedUntil", { time: formatDateTime(entry.lastUsedAt) }) }}</span>
+            <span class="field-value mono">{{ revealed.has(`history.${index}`) ? entry.password : "••••••••••••" }}</span>
+            <span class="field-tools">
+              <m3e-icon-button :aria-label="t(revealed.has(`history.${index}`) ? 'common.hide' : 'common.show')" @click="toggle(`history.${index}`)">
+                <m3e-icon :name="revealed.has(`history.${index}`) ? 'visibility_off' : 'visibility'"></m3e-icon>
+              </m3e-icon-button>
+              <m3e-icon-button :aria-label="t('common.copy')" @click="copy(entry.password)"><m3e-icon name="content_copy"></m3e-icon></m3e-icon-button>
+            </span>
+          </div>
+        </template>
+      </section>
+
       <footer class="detail-footer">
         <span>{{ t("item.created") }} {{ formatDateTime(item.creationDate) }}</span>
         <span>{{ t("item.updated") }} {{ formatDateTime(item.revisionDate) }}</span>
-        <span v-if="item.payload.passwordHistory?.length">{{ t("item.passwordHistory", { count: item.payload.passwordHistory.length }) }}</span>
       </footer>
     </div>
   </article>

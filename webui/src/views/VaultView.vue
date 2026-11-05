@@ -5,7 +5,7 @@ import ItemEditor from "../components/ItemEditor.vue";
 import ItemIcon from "../components/ItemIcon.vue";
 import { t } from "../i18n";
 import { formatRelative, nameCollator } from "../lib/format";
-import { creatableTypes, typeByKey } from "../lib/items";
+import { creatableTypes, itemSubtitle, typeByKey } from "../lib/items";
 import { type Route, go, searchQuery } from "../lib/router";
 import { confirm, toastError } from "../lib/ui";
 import { deleteFolder, emptyTrash, renameFolder, vault, type VaultItem } from "../lib/vault";
@@ -280,7 +280,7 @@ const emptyIcon = computed(() => (props.route.filter === "trash" ? "delete" : pr
           <ItemIcon :type="item.type" :name="item.payload.name" />
           <div class="item-text">
             <strong>{{ item.payload.name || t("item.untitled") }}</strong>
-            <small>{{ item.error ? t("item.decryptFailed") : item.subtitle || formatRelative(item.revisionDate) }}</small>
+            <small>{{ item.error ? t("item.decryptFailed") : itemSubtitle(item.type, item.payload) || formatRelative(item.revisionDate) }}</small>
           </div>
           <m3e-icon v-if="item.attachments.length" class="row-badge" name="attach_file"></m3e-icon>
           <m3e-icon v-if="item.favorite" class="row-badge star" name="star" filled></m3e-icon>

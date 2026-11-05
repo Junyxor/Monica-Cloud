@@ -1,7 +1,21 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, reactive, ref } from "vue";
 import { t } from "../i18n";
-import { type FieldDescriptor, creatableTypes, emptyPayload, generatePassword, getPath, setPath, typeFields, typeInfo, typesWithUris, type ItemPayload } from "../lib/items";
+import {
+  type FieldDescriptor,
+  creatableTypes,
+  emptyPayload,
+  generatePassword,
+  getPath,
+  isFieldVisible,
+  optionLabel,
+  selectOptions,
+  setPath,
+  typeFields,
+  typeInfo,
+  typesWithUris,
+  type ItemPayload
+} from "../lib/items";
 import { confirm, toast, toastError } from "../lib/ui";
 import { ConflictError, saveItem, vault, type VaultItem } from "../lib/vault";
 import ItemIcon from "./ItemIcon.vue";
@@ -37,12 +51,14 @@ window.addEventListener("beforeunload", warnBeforeUnload);
 onBeforeUnmount(() => window.removeEventListener("beforeunload", warnBeforeUnload));
 
 const info = computed(() => typeInfo(type.value));
-const fields = computed(() => typeFields[info.value.key]);
+const fields = computed(() => typeFields[info.value.key].filter((field) => isFieldVisible(field, payload)));
 const showUris = computed(() => typesWithUris.includes(info.value.key));
 
 function value(field: FieldDescriptor) {
   const v = getPath(payload, field.path);
-  return field.kind === "boolean" ? Boolean(v) : ((v as string | undefined) ?? "");
+  if (field.kind === "boolean") return Boolean(v);
+  if (field.defaultValue && (v === undefined || v === null || v === "")) return field.defaultValue;
+  return (v as string | undefined) ?? "";
 }
 
 function update(field: FieldDescriptor, v: unknown) {
@@ -154,8 +170,8 @@ async function save(force = false) {
           <label v-else class="field">
             <span>{{ t(field.labelKey) }}</span>
             <select v-if="field.kind === 'select'" :value="value(field)" @change="update(field, ($event.target as HTMLSelectElement).value)">
-              <option value=""></option>
-              <option v-for="option in field.options" :key="option" :value="option">{{ option }}</option>
+              <option v-if="!field.defaultValue" value=""></option>
+              <option v-for="option in selectOptions(field, String(value(field)))" :key="option" :value="option">{{ optionLabel(field, option) }}</option>
             </select>
             <textarea
               v-else-if="field.kind.includes('multiline')"
